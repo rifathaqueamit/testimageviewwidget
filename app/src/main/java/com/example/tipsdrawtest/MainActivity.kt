@@ -14,10 +14,22 @@ class MainActivity : AppCompatActivity() {
 
         imageView = findViewById(R.id.imageViewWidgets)
 
-        val textWidget = TextWidget(this)
-        textWidget.setText("Hello world!")
-        textWidget.setTextPosition(PointF(30F, 30F))
-        textWidget.setSize(PointF(200F, 200F))
-        imageView.addWidget(textWidget)
+        val screenCenterText = TextWidget(this)
+        screenCenterText.setPreferredParentSize(PointF(400F, 400F))
+        screenCenterText.setScaleByParentSize(true)
+        screenCenterText.setFontSize(50F)
+        screenCenterText.setText("Hello world!")
+        screenCenterText.setTextPosition(PointF(400F, 490F))
+        screenCenterText.setSize(PointF(100F, 50F))
+        imageView.addWidget(screenCenterText)
+
+        val topBatteryText = TextWidget(this)
+        topBatteryText.setPreferredParentSize(PointF(400F, 400F))
+        topBatteryText.setScaleByParentSize(true)
+        topBatteryText.setFontSize(30F)
+        topBatteryText.setText("82%")
+        topBatteryText.setTextPosition(PointF(505F, 290F))
+        topBatteryText.setSize(PointF(100F, 50F))
+        imageView.addWidget(topBatteryText)
     }
 }

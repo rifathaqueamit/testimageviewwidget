@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PointF
+import android.graphics.Typeface
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.Log
@@ -12,7 +13,7 @@ import android.util.Log
 class TextWidget(context: Context): ViewWidget(context) {
     private val TAG = "TextWidget"
 
-    private val mTextSize: Float = 18F
+    private var mTextSize: Float = 18F
     private var mTextSizeInPixels: Int = UIUtils.spToPx(mTextSize, mContext)
 
     private val mTextColor: Int = Color.BLACK
@@ -37,18 +38,45 @@ class TextWidget(context: Context): ViewWidget(context) {
 
     private var mText: String = ""
 
+    private var mTypeface = context.resources.getFont(R.font.opensansregular)
+
     private var textPaint: TextPaint
     private var staticLayout: StaticLayout
 
-    private var parentWidthInPixels = 0
-    private var parentHeightInPixels = 0
+    private var parentWidthInPixels: Int = 0
+    private var parentHeightInPixels: Int = 0
+    private var parentWidth: Float = 0F
+    private var parentHeight: Float = 0F
+
+    private var preferredParentWidth: Float = 0F
+    private var preferredParentHeight: Float = 0F
+    private var scaleByParentSize = false
 
     init {
         textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = mTextColor
-            textSize = mTextSizeInPixels.toFloat()
+            textSize = getPreferredFontSize()
+            typeface = mTypeface
         }
         staticLayout = StaticLayout.Builder.obtain(mText, 0, mText.length, textPaint, mTextWidthInPixels).build()
+    }
+
+    fun getFontSize(): Float {
+        return mTextSize
+    }
+
+    fun setFontSize(size: Float) {
+        mTextSize = size
+        reCreateFont()
+    }
+
+    private fun reCreateFont() {
+        textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = mTextColor
+            textSize = getPreferredFontSize()
+            typeface = mTypeface
+        }
+        reCreateStaticLayout()
     }
 
     override fun onViewAttached() {
@@ -61,9 +89,8 @@ class TextWidget(context: Context): ViewWidget(context) {
 
     override fun onDraw(canvas: Canvas) {
         canvas.save()
-        canvas.translate(mTextMarginStartInPixels.toFloat(), mTextMarginTopInPixels.toFloat())
-        canvas.clipRect(0, 0, mTextWidthInPixels, mTextHeightInPixels)
-        canvas.drawColor(Color.RED)
+        canvas.translate(getPreferredStart(), getPreferredTop())
+        canvas.clipRect(0, 0, getPreferredWidthInPixels(), getPreferredHeightInPixels())
         staticLayout.draw(canvas)
         canvas.restore()
     }
@@ -119,7 +146,90 @@ class TextWidget(context: Context): ViewWidget(context) {
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         parentWidthInPixels = w
+        parentWidth = UIUtils.pxToDp(parentWidthInPixels, mContext)
         parentHeightInPixels = h
-        Log.i(TAG, "onSizeChanged() $parentWidthInPixels:$parentHeightInPixels")
+        parentHeight = UIUtils.pxToDp(parentHeightInPixels, mContext)
+        Log.i(TAG, "onSizeChanged() $parentWidth:$parentHeight")
+
+        if (scaleByParentSize) {
+            reCreateFont()
+        }
+    }
+
+    fun getScaleByParentSize(): Boolean {
+        return scaleByParentSize
+    }
+
+    fun setScaleByParentSize(on: Boolean) {
+        scaleByParentSize = on
+    }
+
+    fun getPreferredParentSize(): PointF {
+        return PointF(preferredParentWidth, preferredParentHeight)
+    }
+
+    fun setPreferredParentSize(size: PointF) {
+        preferredParentWidth = size.x
+        preferredParentHeight = size.y
+    }
+
+    private fun getPreferredWidth(): Float {
+        if (!scaleByParentSize) {
+            return mTextWidth
+        } else {
+            return mTextWidth / preferredParentWidth * parentWidth
+        }
+    }
+
+    private fun getPreferredWidthInPixels(): Int {
+        return UIUtils.dpToPx(getPreferredWidth(), mContext)
+    }
+
+    private fun getPreferredHeight(): Float {
+        if (!scaleByParentSize) {
+            return mTextHeight
+        } else {
+            return mTextHeight / preferredParentHeight * parentHeight
+        }
+    }
+
+    private fun getPreferredHeightInPixels(): Int {
+        return UIUtils.dpToPx(getPreferredHeight(), mContext)
+    }
+
+    private fun getPreferredStart(): Float {
+        if (!scaleByParentSize) {
+            return mTextMarginStart
+        } else {
+            return mTextMarginStart / preferredParentWidth * parentWidth
+        }
+    }
+
+    private fun getPreferredStartInPixels(): Int {
+        return UIUtils.dpToPx(getPreferredStart(), mContext)
+    }
+
+    private fun getPreferredTop(): Float {
+        if (!scaleByParentSize) {
+            return mTextMarginTop
+        } else {
+            return mTextMarginTop / preferredParentWidth * parentWidth
+        }
+    }
+
+    private fun getPreferredTopInPixels(): Int {
+        return UIUtils.dpToPx(getPreferredTop(), mContext)
+    }
+
+    private fun getPreferredFontSize(): Float {
+        if (!scaleByParentSize) {
+            return mTextSize
+        } else {
+            return mTextSize / preferredParentWidth * parentWidth
+        }
+    }
+
+    private fun getPreferredFontSizeInPixels(): Int {
+        return UIUtils.dpToPx(getPreferredFontSize(), mContext)
     }
 }
